@@ -37,7 +37,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Data;
 import org.apache.pulsar.ecosystem.io.bigquery.exception.BQConnectorDirectFailException;
-import org.apache.pulsar.io.common.IOConfigUtils;
+import org.apache.pulsar.ecosystem.io.bigquery.utils.IOConfigUtils;
 import org.apache.pulsar.io.core.SinkContext;
 import org.apache.pulsar.io.core.annotations.FieldDoc;
 
@@ -98,7 +98,17 @@ public class BigQueryConfig implements Serializable {
     private int failedMaxRetryNum;
 
     @FieldDoc(required = false,
-            defaultValue = "false",
+            defaultValue = "true",
+            help = "Automatically create table when table does not exist")
+    private boolean autoCreateTable;
+
+    @FieldDoc(required = false,
+            defaultValue = "true",
+            help = "Automatically update table schema when table schema is incompatible")
+    private boolean autoUpdateTable;
+
+    @FieldDoc(required = false,
+            defaultValue = "true",
             help = "Create a partitioned table when the table is automatically created,"
                     + "it will use __event_time__ the partition key.")
     private boolean partitionedTables;
@@ -109,20 +119,10 @@ public class BigQueryConfig implements Serializable {
     private int partitionedTableIntervalDay;
 
     @FieldDoc(required = false,
-            defaultValue = "false",
+            defaultValue = "true",
             help = "Create a clusteredTables table when the table is automatically created,"
                     + "it will use __message_id__ the partition key.")
     private boolean clusteredTables;
-
-    @FieldDoc(required = false,
-            defaultValue = "false",
-            help = "Automatically create table when table does not exist")
-    private boolean autoCreateTable;
-
-    @FieldDoc(required = false,
-            defaultValue = "false",
-            help = "Automatically update table schema when table schema is incompatible")
-    private boolean autoUpdateTable;
 
     @FieldDoc(required = false,
             defaultValue = "",
@@ -146,11 +146,11 @@ public class BigQueryConfig implements Serializable {
         return TableId.of(projectId, datasetName, tableName);
     }
 
-    public TableName getTableName() {
+    public TableName getBQTableName() {
         return TableName.of(projectId, datasetName, tableName);
     }
 
-    public Set<String> getDefaultSystemField() {
+    public Set<String> getDefaultSystemFields() {
         Set<String> fields = Optional.ofNullable(defaultSystemField)
                 .map(__ -> Arrays.stream(defaultSystemField.split(","))
                         .map(field -> {
@@ -207,7 +207,6 @@ public class BigQueryConfig implements Serializable {
     public static BigQueryConfig load(Map<String, Object> map, SinkContext sinkContext) {
         return IOConfigUtils.loadWithSecrets(map, BigQueryConfig.class, sinkContext);
     }
-
 
     /**
      * The mode controls when data written to the stream becomes visible in BigQuery for reading.
