@@ -19,7 +19,7 @@
 package org.apache.pulsar.ecosystem.io.bigquery;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import com.google.common.collect.Sets;
@@ -47,11 +47,11 @@ public class BigQueryConfigTest {
         Set<String> assertSystemField =
                 Sets.newHashSet("abc", "def", "ggg", "__event_time__", "__message_id__");
         assertEquals(new LinkedHashSet<>(assertSystemField),
-                new LinkedHashSet<>(bigQueryConfig.getDefaultSystemField()));
+                new LinkedHashSet<>(bigQueryConfig.getDefaultSystemFields()));
 
         bigQueryConfig.setDefaultSystemField("a a, b b, cc");
         try {
-            bigQueryConfig.getDefaultSystemField();
+            bigQueryConfig.getDefaultSystemFields();
             fail("Should has failed");
         } catch (BQConnectorDirectFailException e) {
         }
@@ -60,12 +60,28 @@ public class BigQueryConfigTest {
     @Test
     public void testLoad() {
         Map<String, Object> mapConfig = new HashMap<>();
-        mapConfig.put("autoUpdateTable", true);
-        mapConfig.put("credentialJsonString", "test-key");
+        mapConfig.put("projectId", "test-project");
+        mapConfig.put("datasetName", "test-dataset");
+        mapConfig.put("tableName", "test-table");
 
         BigQueryConfig config = BigQueryConfig.load(mapConfig, mock(SinkContext.class));
-        assertTrue(config.isAutoUpdateTable());
-        assertEquals(config.getCredentialJsonString(), "test-key");
+
+        assertEquals(config.getProjectId(), "test-project");
+        assertEquals(config.getDatasetName(), "test-dataset");
+        assertEquals(config.getTableName(), "test-table");
+        assertEquals(config.getVisibleModel(), BigQueryConfig.VisibleModel.Committed);
+        assertEquals(config.getPendingMaxSize(), 10000);
+        assertEquals(config.getBatchMaxSize(), 20);
+        assertEquals(config.getBatchMaxTime(), 5000);
+        assertEquals(config.getBatchFlushIntervalTime(), 2000);
+        assertEquals(config.getFailedMaxRetryNum(), 20);
+        assertEquals(config.isAutoCreateTable(), true);
+        assertEquals(config.isAutoUpdateTable(), true);
+        assertEquals(config.isPartitionedTables(), true);
+        assertEquals(config.getPartitionedTableIntervalDay(), 7);
+        assertEquals(config.isClusteredTables(), true);
+        assertNull(config.getDefaultSystemField());
+        assertNull(config.getCredentialJsonString());
     }
 
 }

@@ -22,7 +22,6 @@ import com.google.protobuf.DynamicMessage;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -77,10 +76,6 @@ public class BigQuerySink implements Sink<GenericObject> {
     @Override
     public void open(Map<String, Object> config, SinkContext sinkContext) {
         this.bigQueryConfig = BigQueryConfig.load(config, sinkContext);
-        Objects.requireNonNull(bigQueryConfig.getProjectId(), "BigQuery project id is not set");
-        Objects.requireNonNull(bigQueryConfig.getDatasetName(), "BigQuery dataset id is not set");
-        Objects.requireNonNull(bigQueryConfig.getTableName(), "BigQuery table name id is not set");
-
         this.recordConverter = new RecordConverterHandler();
         this.schemaManager = new SchemaManager(bigQueryConfig);
         this.scheduledExecutorService =
@@ -88,13 +83,13 @@ public class BigQuerySink implements Sink<GenericObject> {
         DataWriter dataWriter;
         if (bigQueryConfig.getVisibleModel() == BigQueryConfig.VisibleModel.Committed) {
             dataWriter = new DataWriterCommitted(bigQueryConfig.createBigQueryWriteClient(), schemaManager, sinkContext,
-                    bigQueryConfig.getTableName(), bigQueryConfig.getFailedMaxRetryNum());
+                    bigQueryConfig.getBQTableName(), bigQueryConfig.getFailedMaxRetryNum());
         } else if (bigQueryConfig.getVisibleModel() == BigQueryConfig.VisibleModel.Pending) {
             if (bigQueryConfig.getPendingMaxSize() <= 0) {
                 throw new IllegalArgumentException("pendingMaxSize must greater than 0");
             }
             dataWriter = new DataWriterPending(bigQueryConfig.createBigQueryWriteClient(), schemaManager, sinkContext,
-                    bigQueryConfig.getTableName(), bigQueryConfig.getFailedMaxRetryNum(),
+                    bigQueryConfig.getBQTableName(), bigQueryConfig.getFailedMaxRetryNum(),
                     bigQueryConfig.getPendingMaxSize());
         } else {
             throw new BQConnectorDirectFailException("Not support visible model: " + bigQueryConfig.getVisibleModel()
