@@ -89,8 +89,8 @@ public class SchemaManager {
     public SchemaManager(BigQueryConfig bigQueryConfig) {
         this.bigquery = bigQueryConfig.createBigQuery();
         this.tableId = bigQueryConfig.getTableId();
-        this.tableName = bigQueryConfig.getTableName();
-        this.defaultSystemField = bigQueryConfig.getDefaultSystemField();
+        this.tableName = bigQueryConfig.getBQTableName();
+        this.defaultSystemField = bigQueryConfig.getDefaultSystemFields();
         this.autoCreateTable = bigQueryConfig.isAutoCreateTable();
         this.autoUpdateTable = bigQueryConfig.isAutoUpdateTable();
         this.partitionedTables = bigQueryConfig.isPartitionedTables();
